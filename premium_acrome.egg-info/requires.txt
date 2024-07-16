@@ -1,4 +1,0 @@
-pyserial
-crccheck
-stm32loader==0.5.1
-requests
