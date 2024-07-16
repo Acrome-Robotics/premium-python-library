@@ -1,5 +1,5 @@
 Metadata-Version: 2.1
-Name: premium_acrome
+Name: acrome-premium
 Version: 1.0.0
 Summary: Hardware abstraction library for Acrome Robotics products
 Home-page: https://github.com/acrome-robotics/python-library

@@ -4,7 +4,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 	long_description = fh.read()
 
 setuptools.setup(
-	name="premium_acrome",
+	name="acrome-premium",
 	version="1.0.0",
 	author="Berat Computer",
 	author_email="beratdogan@acrome.net",
