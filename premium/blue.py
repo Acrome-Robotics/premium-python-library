@@ -157,30 +157,11 @@ class Blue():
 		for index, value in zip(index_list, value_list):
 			self.vars[int(index)].value(value)
 			fmt_str += 'B' + self.vars[int(index)].type()
-
-		print('======= fmtr =======')
-		print(type(fmt_str))
-		print(fmt_str)
-		print('================================')
-
 		self.__ack_size = struct.calcsize(fmt_str)
-
 		#Create a list of id-value pairs and convert them to a byte-array
 		struct_out = list(struct.pack(fmt_str, *[*[var.value() for var in self.vars[:4]], *[val for pair in zip(index_list, [self.vars[int(index)].value() for index in index_list]) for val in pair]]))
-		
-		print('======= struct out 1 =======')
-		print(type(struct_out))
-		print(struct_out)
-		print('================================')
-
 		struct_out[int(Index.PackageSize)] = len(struct_out) + self.vars[Index.CRCValue].size()
-		self.vars[Index.CRCValue].value(CRC32.calc(struct_out))
-
-		print('======= set_var return =======')
-		print(type(bytes(struct_out) + struct.pack('<' + self.vars[Index.CRCValue].type(), self.vars[Index.CRCValue].value())))
-		print(bytes(struct_out) + struct.pack('<' + self.vars[Index.CRCValue].type(), self.vars[Index.CRCValue].value()))
-		print('================================')
-		
+		self.vars[Index.CRCValue].value(CRC32.calc(struct_out))		
 		return bytes(struct_out) + struct.pack('<' + self.vars[Index.CRCValue].type(), self.vars[Index.CRCValue].value())
 	
 	def get_variables(self, index_list=[]):

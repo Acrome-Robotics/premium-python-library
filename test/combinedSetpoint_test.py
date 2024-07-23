@@ -1,5 +1,5 @@
-from Acrome_Premium.blue import *
-from Acrome_Premium.blue.osModules import *
+from premium.blue import *
+from premium.blue.osModules import *
 
 import time
 
