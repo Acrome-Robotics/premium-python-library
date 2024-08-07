@@ -61,7 +61,8 @@ class Commands(enum.IntEnum):
 	REBOOT = 0x10,
 	EEPROM_WRITE = 0x20,
 	BL_JUMP = 0x30,
-	COMBINED_DRIVE = 0x40,
+	WRITE_SYNC = 0x40,
+	READ_SYNC = 0x41,
 	ACK = 0x80,
 	WRITE_ACK = 0x80 | 0x02,
 	EEPROM_WRITE_ACK = 0x20 | 0x02,
@@ -241,6 +242,11 @@ class Master():
 
 	def attach(self, blue:Blue):
 		self.__driver_list[blue.vars[Index.DeviceID].value()] = blue
+	
+	def busy_wait(self, wait_time):
+		start_time = time.time()
+		while (time.time() - start_time) < wait_time:
+			pass
 
 	def parse_received(self, data):
 		id = data[Index.DeviceID]
@@ -260,6 +266,7 @@ class Master():
 	def set_variables(self, id, idx_val_pairs=[], ack=False) -> list:
 		index_list = [pair[0] for pair in idx_val_pairs]
 		value_list = [pair[1] for pair in idx_val_pairs]
+
 		self.__write_bus(self.__driver_list[id].set_variables(index_list, value_list, ack))
 		if ack:
 			if self.__read_ack(id):
@@ -306,23 +313,43 @@ class Master():
 		if self.__read_ack(id):
 			return True
 
-	def set_variables_combined(self, val_index, values, device_size ,ack=False) -> list:
-		#value_list = [value[i] for i in range(0, device_size)]
+	def set_variable_combined(self, val_indexes, values_lists, device_size ,ack=False) -> list:
+		"""		
+			- val_indexes should be list [val_index1, val_index2, ...]
+			- values should be list in list [[value1, value2, ...], [value1, value2, ...], ...]
+		--------> Ex Usage <-------------------------------------------------------------------------
 
-		
+		set_variable_combined([Index.GoalPosition, Index.Trajectory_time], [[1, 2, 3], [4, 5, 6]], 3)
+
+			------ (this function sets 2 value of 3 devices.)
+
+		---------------------------------------------------------------------------------------------
+		"""
+
+		if(len(val_indexes) != len(values_lists)):
+			raise ValueError("val_indexes and values_lists should have same length")
+		for value_list in values_lists:
+			if(len(value_list) != device_size):
+				raise ValueError(" The length of all of value_lists must be as long as the device size. ")
 		#Set command
-		self.__driver_list[255].vars[Index.Command].value(Commands.COMBINED_DRIVE)
+		self.__driver_list[255].vars[Index.Command].value(Commands.WRITE_SYNC)
 
 		fmt_str = '<' + 'BBBBB'
-		fmt_str = fmt_str + (self.__driver_list[255].vars[val_index]).type()*device_size
+		for val_index in val_indexes:
+			fmt_str = fmt_str + 'B' + (self.__driver_list[255].vars[val_index]).type()*device_size
 
-		self.__driver_list[255].__ack_size = struct.calcsize(fmt_str)
+		indexes_and_values_together = []
+		for val_index, value_list in zip(val_indexes, values_lists):
+			indexes_and_values_together.append(val_index)
+			for value in value_list:
+				indexes_and_values_together.append(value)
 		
-		struct_out = list(struct.pack(fmt_str, *[*[var.value() for var in self.__driver_list[255].vars[:4]], val_index ,*values]))
+		struct_out = list(struct.pack(fmt_str, *[var.value() for var in self.__driver_list[255].vars[:4]], device_size ,*indexes_and_values_together))
 
-		struct_out[int(Index.PackageSize)] = len(struct_out) + self.__driver_list[255].vars[Index.CRCValue].size()
-		self.__driver_list[255].vars[Index.CRCValue].value(CRC32.calc(struct_out))
+		struct_out[int(Index.PackageSize)] = len(struct_out) + self.__driver_list[255].vars[Index.CRCValue].size()						# editing package size
+		self.__driver_list[255].vars[Index.CRCValue].value(CRC32.calc(struct_out))														# adding CRC
 
-		self.__write_bus(bytes(struct_out) + struct.pack('<' + self.__driver_list[255].vars[Index.CRCValue].type(), self.__driver_list[255].vars[Index.CRCValue].value()))
-		#time.sleep(self.__post_sleep)
+		readyToSend = bytes(struct_out) + struct.pack('<' + self.__driver_list[255].vars[Index.CRCValue].type(), self.__driver_list[255].vars[Index.CRCValue].value())
+		self.__write_bus(readyToSend)
 		return [None]
+

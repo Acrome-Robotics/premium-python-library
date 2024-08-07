@@ -1,6 +1,5 @@
 LICENSE
 README.md
-pyproject.toml
 setup.py
 acrome_premium.egg-info/PKG-INFO
 acrome_premium.egg-info/SOURCES.txt
