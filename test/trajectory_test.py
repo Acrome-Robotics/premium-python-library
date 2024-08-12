@@ -22,3 +22,4 @@ print(generate_trajectory(0, 100, 10))
 for i in generate_trajectory(0, 100, 10):
         m.set_variables(0, [[Index.GoalPosition, int(i)*1000]])
 
+

@@ -51,6 +51,18 @@ Index = enum.IntEnum('Index', [
 	'PIOData2',
 	'PIOData3',
 	'ExternalEncoder',
+	'TestValue_i_1',
+	'TestValue_i_2',
+	'TestValue_i_3',
+	'TestValue_i_4',
+	'TestValue_f_1',
+	'TestValue_f_2',
+	'TestValue_f_3',
+	'TestValue_f_4',
+	'TestValue_b_1', 
+	'TestValue_b_2',
+	'TestValue_b_3', 
+	'TestValue_b_4',
 	'CRCValue',
 ], start=0)
 
@@ -63,9 +75,12 @@ class Commands(enum.IntEnum):
 	BL_JUMP = 0x30,
 	WRITE_SYNC = 0x40,
 	READ_SYNC = 0x41,
+	SLOW_STOP = 0x60,
+	STOP = 0x61,
 	ACK = 0x80,
 	WRITE_ACK = 0x80 | 0x02,
 	EEPROM_WRITE_ACK = 0x20 | 0x02,
+	
 class _Data():
 	def __init__(self, index, var_type, rw=True, value = 0):
 		self.__index = index
@@ -126,7 +141,7 @@ class Blue():
 			_Data(Index.GoalSpeed, 'i'),
 			_Data(Index.Acceleration_VELOCITY,'i'),
 			# ////////// General /////////////////////
-			_Data(Index.StepperRunMode, 'b'),
+			_Data(Index.StepperRunMode, 'B'),
 			_Data(Index.IsEncoderFeedBack, 'B'),
 			_Data(Index.Baudrate, 'I'),
 			_Data(Index.TorqueEn, 'B'),
@@ -139,6 +154,18 @@ class Blue():
 			_Data(Index.PIOData2, 'I'),
 			_Data(Index.PIOData3, 'I'),
 			_Data(Index.ExternalEncoder, 'I'),
+			_Data(Index.TestValue_i_1, 'i'),
+			_Data(Index.TestValue_i_2, 'i'),
+			_Data(Index.TestValue_i_3, 'i'),
+			_Data(Index.TestValue_i_4, 'i'),
+			_Data(Index.TestValue_f_1, 'f'),
+			_Data(Index.TestValue_f_2, 'f'),
+			_Data(Index.TestValue_f_3, 'f'),
+			_Data(Index.TestValue_f_4, 'f'),
+			_Data(Index.TestValue_b_1, 'b'),
+			_Data(Index.TestValue_b_2, 'b'),
+			_Data(Index.TestValue_b_3, 'b'),
+			_Data(Index.TestValue_b_4, 'b'),
 			_Data(Index.CRCValue, 'I')
 		]
 
@@ -210,6 +237,15 @@ class Blue():
 	
 	def ping(self):
 		self.vars[Index.Command].value(Commands.PING)
+		fmt_str = '<' + ''.join([var.type() for var in self.vars[:4]])
+		struct_out = list(struct.pack(fmt_str, *[var.value() for var in self.vars[:4]]))
+		struct_out[int(Index.PackageSize)] = len(struct_out) + self.vars[Index.CRCValue].size()
+		self.vars[Index.CRCValue].value(CRC32.calc(struct_out))
+		self.__ack_size = struct.calcsize(fmt_str + self.vars[Index.CRCValue].type())
+		return bytes(struct_out) + struct.pack('<' + self.vars[Index.CRCValue].type(), self.vars[Index.CRCValue].value())
+
+	def slow_stop(self):
+		self.vars[Index.Command].value(Commands.SLOW_STOP)
 		fmt_str = '<' + ''.join([var.type() for var in self.vars[:4]])
 		struct_out = list(struct.pack(fmt_str, *[var.value() for var in self.vars[:4]]))
 		struct_out[int(Index.PackageSize)] = len(struct_out) + self.vars[Index.CRCValue].size()
@@ -312,6 +348,11 @@ class Master():
 		self.__write_bus(self.__driver_list[id].ping())
 		if self.__read_ack(id):
 			return True
+		
+	def slow_stop(self, id):
+		self.__write_bus(self.__driver_list[id].slow_stop())
+		time.sleep(self.__post_sleep)
+
 
 	def set_variable_combined(self, val_indexes, values_lists, device_size ,ack=False) -> list:
 		"""		

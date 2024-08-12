@@ -11,13 +11,23 @@ print(SERIAL_PORT)
 
 m = Master(SERIAL_PORT, 115200)
 m.attach(Blue(BATCH_ID))
+m.attach(Blue(1))
 
 pos = 0
 i = 0
 
+m.set_variables(1, [[Index.TorqueEn, 1]])
 while True:
-    m.set_variable_combined([Index.GoalPosition, Index.Trajectory_time, Index.Trajectory_accel],[[123,123,4],[1,2,5],[50,223,25]], 3)
-    time.sleep(1)
-    m.set_variable_combined([Index.GoalPosition, Index.Trajectory_time, Index.Trajectory_accel],[[123,2500,4],[1,19,5],[50,11111,25]], 3)
-    time.sleep(1)
-    i = 0
+    pos = int(input("Enter position: "))
+    time_traj = 10
+    m.set_variable_combined([Index.GoalPosition, Index.Trajectory_time],[[123,pos,123],[1,time_traj,5]], 3)
+    time.sleep(0.005)  
+    
+    values = m.get_variables(1, [Index.TestValue_i_1, Index.TestValue_i_2, Index.TestValue_i_3])
+    current_pos = values[0]
+
+    while abs(current_pos - pos) > 10:
+        values = m.get_variables(1, [Index.TestValue_i_1, Index.TestValue_i_2, Index.TestValue_i_3])
+        current_pos = values[0]
+        print(values)
+        pass
