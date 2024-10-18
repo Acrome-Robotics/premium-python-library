@@ -72,6 +72,7 @@ class Commands(enum.IntEnum):
 	WRITE = 0x02,
 	REBOOT = 0x10,
 	EEPROM_WRITE = 0x20,
+	CALIBRATE = 0x25,
 	BL_JUMP = 0x30,
 	WRITE_SYNC = 0x40,
 	READ_SYNC = 0x41,
@@ -252,6 +253,16 @@ class Blue():
 		self.vars[Index.CRCValue].value(CRC32.calc(struct_out))
 		self.__ack_size = struct.calcsize(fmt_str + self.vars[Index.CRCValue].type())
 		return bytes(struct_out) + struct.pack('<' + self.vars[Index.CRCValue].type(), self.vars[Index.CRCValue].value())
+	
+	def calibrate(self):
+		self.vars[Index.Command].value(Commands.CALIBRATE)
+		fmt_str = '<' + ''.join([var.type() for var in self.vars[:4]])
+		struct_out = list(struct.pack(fmt_str, *[var.value() for var in self.vars[:4]]))
+		struct_out[int(Index.PackageSize)] = len(struct_out) + self.vars[Index.CRCValue].size()
+		self.vars[Index.CRCValue].value(CRC32.calc(struct_out))
+		self.__ack_size = 0
+		return bytes(struct_out) + struct.pack('<' + self.vars[Index.CRCValue].type(), self.vars[Index.CRCValue].value())
+
 
 class Master():
 	def __init__(self, portname, baudrate=115200):
@@ -348,6 +359,10 @@ class Master():
 		self.__write_bus(self.__driver_list[id].ping())
 		if self.__read_ack(id):
 			return True
+		
+	def calibrate(self, id):
+		self.__write_bus(self.__driver_list[id].calibrate())
+		time.sleep(self.__post_sleep)
 		
 	def slow_stop(self, id):
 		self.__write_bus(self.__driver_list[id].slow_stop())

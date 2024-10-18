@@ -14,14 +14,14 @@ print(SERIAL_PORT)
 
 m = Master(SERIAL_PORT, 115200)
 m.attach(Blue(BATCH_ID))
-m.attach(Blue(1))
+m.attach(Blue(0),Blue(1),Blue(2),Blue(3),Blue(4),Blue(5))
 
 pos = 0
 i = 0
 time_traj = 10
 
 
-m.set_variables(1, [[Index.TorqueEn, 1]])
+m.set_variable_combined([Index.TorqueEn],[[1,1,1,1,1,1]],6)
 # Verileri depolamak için bir liste oluşturuyoruz
 error_list = []
 current_position_list = []
@@ -32,30 +32,26 @@ encoder_list = []
 def add_data():
     while True:
         # Burada zaman damgasını veri olarak ekliyoruz, ancak bu veriyi isteğinize göre değiştirebilirsiniz.
-
+        '''
         values = m.get_variables(1, [Index.TestValue_i_1, Index.TestValue_i_2, Index.TestValue_i_3, Index.TestValue_i_4])
-        print(values)
         current_position_list.append(values[0])
         target_list.append(values[1])
         error_list.append(values[2])
         encoder_list.append(values[3])
-
+        '''
         #print(f"Added data: {current_time}")
 
         # Klavyeden 'q' tuşuna basıldığında döngüyü kırıyoruz
         if keyboard.is_pressed('y'):
             pos = int(input("Enter position: "))
-            m.set_variable_combined([Index.GoalPosition, Index.Trajectory_time],[[123,pos,123],[1,time_traj,5]], 3)
-
+            m.set_variable_combined([Index.GoalPosition, Index.Trajectory_time],[[pos,pos,pos,pos,pos,pos],[time_traj,time_traj,time_traj,time_traj,time_traj,time_traj]], 6)
 
         if keyboard.is_pressed('q'):
             break
 
-        if keyboard.is_pressed('s'):
-            m.slow_stop(BATCH_ID)
-            
-
-    save_data_to_json()
+    
+    print("code is finished.")
+    #save_data_to_json()
 
 # Verileri bir JSON dosyasına kaydeden fonksiyon
 def save_data_to_json():
