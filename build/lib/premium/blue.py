@@ -32,9 +32,6 @@ Index = enum.IntEnum('Index', [
 	'LimitSwitch_enable',
 	# ////// Velocity Control Parameters //////
 	'MaxSpeed_VELOCITY',
-	'MinSpeed_VELOCITY',
-	'MaxAccel_VELOCITY',
-	'MinAccel_VELOCITY',
 	'GoalSpeed',
 	'Acceleration_VELOCITY',
 	# ////////// General /////////////////////
@@ -72,6 +69,7 @@ class Commands(enum.IntEnum):
 	WRITE = 0x02,
 	REBOOT = 0x10,
 	EEPROM_WRITE = 0x20,
+	CALIBRATE = 0x25,
 	BL_JUMP = 0x30,
 	WRITE_SYNC = 0x40,
 	READ_SYNC = 0x41,
@@ -135,9 +133,6 @@ class Blue():
 			_Data(Index.LimitSwitch_enable,'B'),
 			# ////// Velocity Control Parameters //////
 			_Data(Index.MaxSpeed_VELOCITY, 'i'),
-			_Data(Index.MinSpeed_VELOCITY, 'i'),
-			_Data(Index.MaxAccel_VELOCITY, 'i'),
-			_Data(Index.MinAccel_VELOCITY, 'i'),
 			_Data(Index.GoalSpeed, 'i'),
 			_Data(Index.Acceleration_VELOCITY,'i'),
 			# ////////// General /////////////////////
@@ -252,6 +247,16 @@ class Blue():
 		self.vars[Index.CRCValue].value(CRC32.calc(struct_out))
 		self.__ack_size = struct.calcsize(fmt_str + self.vars[Index.CRCValue].type())
 		return bytes(struct_out) + struct.pack('<' + self.vars[Index.CRCValue].type(), self.vars[Index.CRCValue].value())
+	
+	def calibrate(self):
+		self.vars[Index.Command].value(Commands.CALIBRATE)
+		fmt_str = '<' + ''.join([var.type() for var in self.vars[:4]])
+		struct_out = list(struct.pack(fmt_str, *[var.value() for var in self.vars[:4]]))
+		struct_out[int(Index.PackageSize)] = len(struct_out) + self.vars[Index.CRCValue].size()
+		self.vars[Index.CRCValue].value(CRC32.calc(struct_out))
+		self.__ack_size = 0
+		return bytes(struct_out) + struct.pack('<' + self.vars[Index.CRCValue].type(), self.vars[Index.CRCValue].value())
+
 
 class Master():
 	def __init__(self, portname, baudrate=115200):
@@ -348,6 +353,10 @@ class Master():
 		self.__write_bus(self.__driver_list[id].ping())
 		if self.__read_ack(id):
 			return True
+		
+	def calibrate(self, id):
+		self.__write_bus(self.__driver_list[id].calibrate())
+		time.sleep(self.__post_sleep)
 		
 	def slow_stop(self, id):
 		self.__write_bus(self.__driver_list[id].slow_stop())

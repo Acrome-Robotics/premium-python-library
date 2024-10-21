@@ -32,9 +32,6 @@ Index = enum.IntEnum('Index', [
 	'LimitSwitch_enable',
 	# ////// Velocity Control Parameters //////
 	'MaxSpeed_VELOCITY',
-	'MinSpeed_VELOCITY',
-	'MaxAccel_VELOCITY',
-	'MinAccel_VELOCITY',
 	'GoalSpeed',
 	'Acceleration_VELOCITY',
 	# ////////// General /////////////////////
@@ -136,9 +133,6 @@ class Blue():
 			_Data(Index.LimitSwitch_enable,'B'),
 			# ////// Velocity Control Parameters //////
 			_Data(Index.MaxSpeed_VELOCITY, 'i'),
-			_Data(Index.MinSpeed_VELOCITY, 'i'),
-			_Data(Index.MaxAccel_VELOCITY, 'i'),
-			_Data(Index.MinAccel_VELOCITY, 'i'),
 			_Data(Index.GoalSpeed, 'i'),
 			_Data(Index.Acceleration_VELOCITY,'i'),
 			# ////////// General /////////////////////
