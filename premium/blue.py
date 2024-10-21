@@ -3,6 +3,8 @@ import struct
 from crccheck.crc import Crc32Mpeg2 as CRC32
 import time
 import serial
+from stm32loader.main import main as stm32loader_main
+
 
 Index = enum.IntEnum('Index', [
 	'Header',
@@ -256,6 +258,15 @@ class Blue():
 		self.vars[Index.CRCValue].value(CRC32.calc(struct_out))
 		self.__ack_size = 0
 		return bytes(struct_out) + struct.pack('<' + self.vars[Index.CRCValue].type(), self.vars[Index.CRCValue].value())
+	
+	def enter_bootloader(self):
+		self.vars[Index.Command].value(Commands.BL_JUMP)
+		fmt_str = '<' + ''.join([var.type() for var in self.vars[:4]])
+		struct_out = list(struct.pack(fmt_str, *[var.value() for var in self.vars[:4]]))
+		struct_out[int(Index.PackageSize)] = len(struct_out) + self.vars[Index.CRCValue].size()
+		self.vars[Index.CRCValue].value(CRC32.calc(struct_out))
+		self.__ack_size = 0
+		return bytes(struct_out) + struct.pack('<' + self.vars[Index.CRCValue].type(), self.vars[Index.CRCValue].value())
 
 
 class Master():
@@ -362,6 +373,14 @@ class Master():
 		self.__write_bus(self.__driver_list[id].slow_stop())
 		time.sleep(self.__post_sleep)
 
+	def enter_bootloader(self, id: int):
+		""" 
+		Args:
+			id (int): The device ID of the driver.
+		"""
+		self.__write_bus(self.__driver_list[id].enter_bootloader())
+		time.sleep(self.__post_sleep)
+
 
 	def set_variable_combined(self, val_indexes, values_lists, device_size ,ack=False) -> list:
 		"""		
@@ -402,4 +421,41 @@ class Master():
 		readyToSend = bytes(struct_out) + struct.pack('<' + self.__driver_list[255].vars[Index.CRCValue].type(), self.__driver_list[255].vars[Index.CRCValue].value())
 		self.__write_bus(readyToSend)
 		return [None]
+
+	def update_fw_from_file(self, id: int, binary_file_path: str) -> bool:
+		""" Update firmware from a local binary file.
+
+		Args:
+			id (int): The device ID of the driver
+			binary_file_path (str): Path to the local binary file
+
+		Returns:
+			bool: True if the firmware is updated successfully
+		"""
+		
+		try:
+			# Open the binary file in read-binary mode
+			with open(binary_file_path, 'rb') as fw_file:
+				
+				# Put the driver into bootloader mode
+				self.enter_bootloader(id)
+				time.sleep(0.1)
+
+				# Close the serial port
+				serial_settings = self.__ph.get_settings()
+				self.__ph.close()
+
+				# Upload the binary using stm32loader (or a similar tool)
+				args = ['-p', self.__ph.portstr, '-b', '115200', '-e', '-w', '-v', binary_file_path]
+				stm32loader_main(*args)
+
+				# Reopen the serial port with the previous settings
+				self.__ph.apply_settings(serial_settings)
+				self.__ph.open()
+
+				return True
+
+		except Exception as e:
+			print(f"Firmware update failed: {e}")
+			return False
 
