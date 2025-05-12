@@ -1,7 +1,7 @@
 Metadata-Version: 2.1
 Name: acrome-premium
-Version: 1.0.4
-Summary: Hardware abstraction library for Acrome Robotics products
+Version: 1.0.6
+Summary: Premium Board communication library. -limit switches are added.
 Home-page: https://github.com/acrome-robotics/python-library
 Author: Berat Computer
 Author-email: beratdogan@acrome.net

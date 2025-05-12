@@ -48,6 +48,8 @@ Index = enum.IntEnum('Index', [
 	'PIOData2',
 	'PIOData3',
 	'ExternalEncoder',
+	'Button_0',
+	'Button_1',
 	'TestValue_i_1',
 	'TestValue_i_2',
 	'TestValue_i_3',
@@ -79,6 +81,11 @@ class Commands(enum.IntEnum):
 	WRITE_ACK = 0x80 | 0x02,
 	EEPROM_WRITE_ACK = 0x20 | 0x02,
 	
+class RunModes(enum.IntEnum):
+	POSITION = 0,
+	VELOCITY = 2,
+	SLOW_DOWN = 4,
+
 class _Data():
 	def __init__(self, index, var_type, rw=True, value = 0):
 		self.__index = index
@@ -149,6 +156,8 @@ class Blue():
 			_Data(Index.PIOData2, 'I'),
 			_Data(Index.PIOData3, 'I'),
 			_Data(Index.ExternalEncoder, 'I'),
+			_Data(Index.Button_0, 'B'),
+			_Data(Index.Button_1, 'B'),
 			_Data(Index.TestValue_i_1, 'i'),
 			_Data(Index.TestValue_i_2, 'i'),
 			_Data(Index.TestValue_i_3, 'i'),

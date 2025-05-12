@@ -5,10 +5,10 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
 	name="acrome-premium",
-	version="1.0.5",
+	version="1.0.6",
 	author="Berat Computer",
 	author_email="beratdogan@acrome.net",
-	description="Hardware abstraction library for Acrome Robotics products",
+	description="Premium Board communication library. -limit switches are added.",
 	long_description=long_description,
 	long_description_content_type="text/markdown",
 	url="https://github.com/acrome-robotics/python-library",
