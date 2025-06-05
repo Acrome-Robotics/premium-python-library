@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
 	name="acrome-premium",
-	version="1.0.6",
+	version="1.0.7",
 	author="Berat Computer",
 	author_email="beratdogan@acrome.net",
 	description="Premium Board communication library. -limit switches are added.",

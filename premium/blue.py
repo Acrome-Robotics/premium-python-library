@@ -32,7 +32,7 @@ Index = enum.IntEnum('Index', [
 	'LimitSwitch_enable',
 	# ////// Velocity Control Parameters //////
 	'MaxSpeed_VELOCITY',
-	'GoalSpeed',
+	'TargetVelocity',
 	'Acceleration_VELOCITY',
 	# ////////// General /////////////////////
 	'StepperRunMode',
@@ -82,9 +82,11 @@ class Commands(enum.IntEnum):
 	EEPROM_WRITE_ACK = 0x20 | 0x02,
 	
 class RunModes(enum.IntEnum):
-	POSITION = 0,
-	VELOCITY = 2,
-	SLOW_DOWN = 4,
+	RUNMODE_Position_Inside_Trajectory = 0,
+	RUNMODE_Position_Outside_Trajectory = 1,
+	RUNMODE_Velocity = 2,
+	RUNMODE_Torque= 3,
+	RUNMODE__Slow_Down = 4, # this mode cannot pick manually.
 
 class _Data():
 	def __init__(self, index, var_type, rw=True, value = 0):
@@ -129,9 +131,9 @@ class Blue():
 			# ////////////////////////////////////////
 			_Data(Index.MinPosition,'i'),
 			_Data(Index.MaxPosition,'i'),
-			_Data(Index.MinSpeed_POS,'i'),
-			_Data(Index.MaxSpeed_POS,'i'),
-			_Data(Index.MaxAccel_POS,'i'),
+			_Data(Index.MinSpeed_POS,'f'),
+			_Data(Index.MaxSpeed_POS,'f'),
+			_Data(Index.MaxAccel_POS,'f'),
 			_Data(Index.GoalPosition,'i'),
 			_Data(Index.EncoderDeadband_POS,'I'),
 			_Data(Index.Trajectory_time,'f'),
@@ -139,9 +141,9 @@ class Blue():
 			_Data(Index.Trajectory_maxSpeed,'f'),
 			_Data(Index.LimitSwitch_enable,'B'),
 			# ////// Velocity Control Parameters //////
-			_Data(Index.MaxSpeed_VELOCITY, 'i'),
-			_Data(Index.GoalSpeed, 'i'),
-			_Data(Index.Acceleration_VELOCITY,'i'),
+			_Data(Index.MaxSpeed_VELOCITY, 'f'),
+			_Data(Index.TargetVelocity, 'f'),
+			_Data(Index.Acceleration_VELOCITY,'f'),
 			# ////////// General /////////////////////
 			_Data(Index.StepperRunMode, 'B'),
 			_Data(Index.IsEncoderFeedBack, 'B'),
